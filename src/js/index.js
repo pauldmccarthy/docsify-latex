@@ -21,18 +21,25 @@ function getCommentReplaceMarkupRegex(placeholder='') {
   return new RegExp(`<!-- ${commentReplaceMark} ${placeholder} (.*?) -->`);
 }
 
-function getBlockRegex(matchStartRegex, matchEndRegex, needMatchMultipleLine, escape = true) {
+function getBlockRegex(matchStartRegex, matchEndRegex, needMatchMultipleLine, escape = true, raw = false) {
   // Escape string according to regex syntax
   if (escape) {
     matchStartRegex = escapeRegex(matchStartRegex);
     matchEndRegex = escapeRegex(matchEndRegex);
+  }
+  let chr;
+  if (raw) {
+    chr = '[\\s\\S]';
+  }
+  else {
+    chr = `[^\\\\${needMatchMultipleLine ? '' : '\n'}]|\\\\.`;
   }
   // Matches markdown inline math
   // Group 0: whole match result
   // Group 1: content (with matchRegexs)
   // Group 2: matchStartRegex match result
   // Group 3: inner content (with matchRegexs)
-  return new RegExp(`(?:^|[^\\\\])((${matchStartRegex})((?:[^\\\\${needMatchMultipleLine ? '' : '\n'}]|\\\\.)+?)${matchEndRegex})`);
+  return new RegExp(`(?:^|[^\\\\])((${matchStartRegex})((?:${chr})+?)${matchEndRegex})`);
 }
 
 function matchByRegexArray(content, regexGroup, displayMode = false) {
@@ -61,11 +68,11 @@ const codePlaceholder = 'CODE';
 const regex = {
   // Matches html code blocks (inline and multi-line)
   // Example: <code>CODE</code>
-  codeTagMarkup: getBlockRegex('<code>', '</code>', true),
+  codeTagMarkup: getBlockRegex('<code>', '</code>', true, true, true),
 
   // Matches markdown code blocks (inline and multi-line)
   // Example: ```CODE```
-  codeBlockMarkup: getBlockRegex('`{3,}', '\\2', true, false),
+  codeBlockMarkup: getBlockRegex('`{3,}', '\\2', true, false, true),
 
   // Matches markdown inline code
   // Example: `CODE`
